@@ -1,8 +1,7 @@
 package com.example.jeffrey.springcloudtask.configuration;
 
 import com.example.jeffrey.springcloudtask.SpringCloudTaskApplication;
-import com.example.jeffrey.springcloudtask.db.CacheEntity;
-import com.example.jeffrey.springcloudtask.db.CacheService;
+import com.example.jeffrey.springcloudtask.computation.LengthyWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -12,15 +11,22 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.task.configuration.EnableTask;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableBatchProcessing
 @EnableTask
+@EnableConfigurationProperties(value = { CacheServiceConfig.class})
 public class TaskConfig {
     private static Logger LOGGER = LoggerFactory.getLogger(SpringCloudTaskApplication.class);
 
@@ -33,7 +39,10 @@ public class TaskConfig {
     public StepBuilderFactory stepBuilderFactory;
 
     @Autowired
-    public CacheService cacheService;
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private CacheServiceConfig cacheServiceConfig;
 
     @Bean
     public Job job1() {
@@ -47,14 +56,16 @@ public class TaskConfig {
                         .tasklet((contribution, chunkContext) -> {
                             LOGGER.info("Job1 was run");
 
-                            // update the value to cache
-                            cacheService.save(new CacheEntity("test1-key", new Date().toString()));
-                            cacheService.save(new CacheEntity("test2-key", new Date().toString()));
-                            cacheService.save(new CacheEntity("test3-key", new Date().toString()));
-                            cacheService.save(new CacheEntity("test4-key", new Date().toString()));
+                            // TODO: replace the lengthy computation work
+                            LengthyWork.testSherlockAndAnagrams();
 
-                            Iterable<CacheEntity> records = cacheService.findAll();
-                            LOGGER.info(records.toString());
+                            // Update the result to remote cache via restful call
+                            URI uri = URI.create(cacheServiceConfig.writerEndpoint);
+                            Map<String, String> entity = new HashMap<>();
+                            entity.put("endpoint", "test4-key");
+                            entity.put("responseBody", new Date().toString());
+                            ResponseEntity<?> responseEntity = restTemplate.postForEntity(uri, entity, Map.class);
+                            LOGGER.info("response: {}", responseEntity.getBody().toString());
 
                             return RepeatStatus.FINISHED;
                         })
