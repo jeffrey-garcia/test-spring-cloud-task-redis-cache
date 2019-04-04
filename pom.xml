@@ -5,7 +5,7 @@
 
 	<groupId>com.example.jeffrey</groupId>
 	<artifactId>spring-cloud-task-redis-cache</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>spring-cloud-task-redis-cache</name>
@@ -23,7 +23,26 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<spring.cloud.task.version>1.2.2.RELEASE</spring.cloud.task.version>
+
+		<artifactory.url>https://artifactory.platform.manulife.io/artifactory</artifactory.url>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>spring-release</id>
+			<name>Spring Releases</name>
+			<url>https://repo.spring.io/libs-release</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<!-- In-house repository server to lookup deployed dependencies -->
+		<repository>
+			<id>releases</id>
+			<url>${artifactory.url}/libs-release-local/</url>
+		</repository>
+	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -83,5 +102,13 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<!-- Deploy to in-house repository server when test passed -->
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<url>${artifactory.url}/libs-release-local/</url>
+		</repository>
+	</distributionManagement>
 
 </project>
