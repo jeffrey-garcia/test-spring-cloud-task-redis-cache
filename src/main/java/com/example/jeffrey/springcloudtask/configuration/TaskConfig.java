@@ -5,6 +5,8 @@ import com.example.jeffrey.springcloudtask.computation.LengthyWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -19,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +54,7 @@ public class TaskConfig {
                 // Spring Batch has the rule that a JobInstance can only be run once to completion.
                 // This means that for each combination of identifying job parameters, only have one
                 // JobExecution that can results in COMPLETE.
-                .incrementer(new RunIdIncrementer())
+                .incrementer(new RunIdIncrementerWithSystemTime())
                 .start(stepBuilderFactory.get("job1step1")
                         .tasklet((contribution, chunkContext) -> {
                             LOGGER.info("Job1 was run");
@@ -73,4 +76,31 @@ public class TaskConfig {
                 .build();
     }
 
+}
+
+class RunIdIncrementerWithSystemTime extends RunIdIncrementer {
+    private static String RUN_ID_KEY = "run.id";
+    private String key;
+    private String systemTimeSuffix = "run.systemTime";
+
+    public RunIdIncrementerWithSystemTime() {
+        this.key = RUN_ID_KEY;
+    }
+
+    @Override
+    public void setKey(String key) {
+        this.key = key;
+        super.setKey(key);
+    }
+
+    @Override
+    public JobParameters getNext(JobParameters parameters) {
+        JobParameters params = parameters == null ? new JobParameters() : parameters;
+        long id = params.getLong(this.key, 0L) + 1L;
+        long currentTimeInMillis = parameters.getLong(this.key, System.currentTimeMillis());
+        return (new JobParametersBuilder(params))
+                .addLong(this.key, id)
+                .addLong(systemTimeSuffix, currentTimeInMillis)
+                .toJobParameters();
+    }
 }
