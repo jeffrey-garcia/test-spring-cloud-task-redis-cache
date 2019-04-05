@@ -5,8 +5,6 @@ import com.example.jeffrey.springcloudtask.computation.LengthyWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -21,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,13 +47,13 @@ public class TaskConfig {
     private CacheServiceConfig cacheServiceConfig;
 
     @Bean
-    public Job job1() {
-        return jobBuilderFactory.get("job1")
+    public Job job() {
+        return jobBuilderFactory.get(getJobName())
                 // Need an unique incrementer because jobs use a database to maintain execution state
                 // Spring Batch has the rule that a JobInstance can only be run once to completion.
                 // This means that for each combination of identifying job parameters, only have one
                 // JobExecution that can results in COMPLETE.
-                .incrementer(new RunIdIncrementerWithSystemTime())
+                .incrementer(new RunIdIncrementer())
                 .start(stepBuilderFactory.get("job1step1")
                         .tasklet((contribution, chunkContext) -> {
                             LOGGER.info("Job1 was run");
@@ -76,31 +75,17 @@ public class TaskConfig {
                 .build();
     }
 
-}
+    protected String getJobName() {
+        String jobName = "job-" + System.currentTimeMillis();
 
-class RunIdIncrementerWithSystemTime extends RunIdIncrementer {
-    private static String RUN_ID_KEY = "run.id";
-    private String key;
-    private String systemTimeSuffix = "run.systemTime";
+        try {
+            int randomInt = SecureRandom.getInstanceStrong().nextInt();
+            jobName = randomInt < 0 ? jobName + randomInt : jobName + "-" + randomInt;
 
-    public RunIdIncrementerWithSystemTime() {
-        this.key = RUN_ID_KEY;
-    }
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
 
-    @Override
-    public void setKey(String key) {
-        this.key = key;
-        super.setKey(key);
-    }
-
-    @Override
-    public JobParameters getNext(JobParameters parameters) {
-        JobParameters params = parameters == null ? new JobParameters() : parameters;
-        long id = params.getLong(this.key, 0L) + 1L;
-        long currentTimeInMillis = parameters.getLong(this.key, System.currentTimeMillis());
-        return (new JobParametersBuilder(params))
-                .addLong(this.key, id)
-                .addLong(systemTimeSuffix, currentTimeInMillis)
-                .toJobParameters();
+        return jobName;
     }
 }
