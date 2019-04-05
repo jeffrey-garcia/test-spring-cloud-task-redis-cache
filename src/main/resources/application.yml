@@ -1,3 +1,3 @@
 cache-service:
-#  writerEndpoint: http://localhost:8080/
+#  writerEndpoint: http://localhost:8080/cache/update
   writerEndpoint: https://test-redis-cache-writer.apps.sea.preview.pcf.manulife.com/cache/update

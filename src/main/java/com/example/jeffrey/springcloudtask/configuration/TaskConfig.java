@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,8 +47,8 @@ public class TaskConfig {
     private CacheServiceConfig cacheServiceConfig;
 
     @Bean
-    public Job job1() {
-        return jobBuilderFactory.get("job1")
+    public Job job() {
+        return jobBuilderFactory.get(getJobName())
                 // Need an unique incrementer because jobs use a database to maintain execution state
                 // Spring Batch has the rule that a JobInstance can only be run once to completion.
                 // This means that for each combination of identifying job parameters, only have one
@@ -73,4 +75,17 @@ public class TaskConfig {
                 .build();
     }
 
+    protected String getJobName() {
+        String jobName = "job-" + System.currentTimeMillis();
+
+        try {
+            int randomInt = SecureRandom.getInstanceStrong().nextInt();
+            jobName = randomInt < 0 ? jobName + randomInt : jobName + "-" + randomInt;
+
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return jobName;
+    }
 }
