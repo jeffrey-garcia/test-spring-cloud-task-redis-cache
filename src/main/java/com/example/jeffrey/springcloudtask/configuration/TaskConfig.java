@@ -19,8 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,15 +75,6 @@ public class TaskConfig {
 
     protected String getJobName() {
         String jobName = "job-" + System.currentTimeMillis();
-
-        try {
-            int randomInt = SecureRandom.getInstanceStrong().nextInt();
-            jobName = randomInt < 0 ? jobName + randomInt : jobName + "-" + randomInt;
-
-        } catch (NoSuchAlgorithmException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
         return jobName;
     }
 }
