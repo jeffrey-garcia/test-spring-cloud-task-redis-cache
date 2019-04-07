@@ -8,7 +8,6 @@ import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -58,7 +57,7 @@ public class TaskConfig {
                             LOGGER.info("Job1 was run");
 
                             // TODO: replace the lengthy computation work
-                            LengthyWork.testSherlockAndAnagrams();
+//                            LengthyWork.testSherlockAndAnagrams();
 
                             // Update the result to remote cache via restful call
                             URI uri = URI.create(cacheServiceConfig.writerEndpoint);
@@ -81,14 +80,15 @@ public class TaskConfig {
 
     class SimpleIncrementer implements JobParametersIncrementer {
         public JobParameters getNext(JobParameters parameters) {
-            if (parameters==null || parameters.isEmpty()) {
-                return new JobParametersBuilder().addLong("run.id", 1L).toJobParameters();
+            long id = 1L;
+
+            if (parameters!=null && !parameters.isEmpty()) {
+                id = parameters.getLong("run.id",1L) + 1;
             }
 
-            long id = parameters.getLong("run.id",1L) + 1;
             return new JobParametersBuilder()
                     .addLong("run.id", id)
-                    .addParameter("timestamp", new JobParameter(System.currentTimeMillis()))
+                    .addParameter("timestamp", new JobParameter(new Date().toString()))
                     .toJobParameters();
         }
     }
