@@ -4,7 +4,7 @@ import com.example.jeffrey.springcloudtask.SpringCloudTaskApplication;
 import com.example.jeffrey.springcloudtask.computation.LengthyWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.Job;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -51,7 +51,8 @@ public class TaskConfig {
                 // Spring Batch has the rule that a JobInstance can only be run once to completion.
                 // This means that for each combination of identifying job parameters, only have one
                 // JobExecution that can results in COMPLETE.
-                .incrementer(new RunIdIncrementer())
+                //.incrementer(new RunIdIncrementer())
+                .incrementer(new SimpleIncrementer())
                 .start(stepBuilderFactory.get("job1step1")
                         .tasklet((contribution, chunkContext) -> {
                             LOGGER.info("Job1 was run");
@@ -76,5 +77,19 @@ public class TaskConfig {
     protected String getJobName() {
         String jobName = "job-" + System.currentTimeMillis();
         return jobName;
+    }
+
+    class SimpleIncrementer implements JobParametersIncrementer {
+        public JobParameters getNext(JobParameters parameters) {
+            if (parameters==null || parameters.isEmpty()) {
+                return new JobParametersBuilder().addLong("run.id", 1L).toJobParameters();
+            }
+
+            long id = parameters.getLong("run.id",1L) + 1;
+            return new JobParametersBuilder()
+                    .addLong("run.id", id)
+                    .addParameter("timestamp", new JobParameter(System.currentTimeMillis()))
+                    .toJobParameters();
+        }
     }
 }
