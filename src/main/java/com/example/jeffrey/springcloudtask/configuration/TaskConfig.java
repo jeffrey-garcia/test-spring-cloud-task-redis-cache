@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 @EnableBatchProcessing
@@ -60,12 +61,17 @@ public class TaskConfig {
 //                            LengthyWork.testSherlockAndAnagrams();
 
                             // Update the result to remote cache via restful call
-                            URI uri = URI.create(cacheServiceConfig.writerEndpoint);
-                            Map<String, String> entity = new HashMap<>();
-                            entity.put("endpoint", "test4-key");
-                            entity.put("responseBody", new Date().toString());
-                            ResponseEntity<?> responseEntity = restTemplate.postForEntity(uri, entity, Map.class);
-                            LOGGER.info("response: {}", responseEntity.getBody().toString());
+//                            URI uri = URI.create(cacheServiceConfig.writerEndpoint);
+//                            Map<String, String> entity = new HashMap<>();
+//                            entity.put("endpoint", "test-" + System.currentTimeMillis() + "-key");
+//                            entity.put("responseBody", new Date().toString());
+//                            ResponseEntity<?> responseEntity = restTemplate.postForEntity(uri, entity, Map.class);
+//                                                   URI uri = URI.create(cacheServiceConfig.writerEndpoint);
+//                            Map<String, String> entity = new HashMap<>();
+//                            entity.put("endpoint", "test-" + System.currentTimeMillis() + "-key");
+//                            entity.put("responseBody", new Date().toString());
+//                            ResponseEntity<?> responseEntity = restTemplate.postForEntity(uri, entity, Map.class);
+//                            LOGGER.info("response: {}", responseEntity.getBody().toString());     LOGGER.info("response: {}", responseEntity.getBody().toString());
 
                             return RepeatStatus.FINISHED;
                         })
@@ -88,6 +94,7 @@ public class TaskConfig {
 
             return new JobParametersBuilder()
                     .addLong("run.id", id)
+                    .addParameter("uuid", new JobParameter(UUID.randomUUID().toString()))
                     .addParameter("timestamp", new JobParameter(new Date().toString()))
                     .toJobParameters();
         }
