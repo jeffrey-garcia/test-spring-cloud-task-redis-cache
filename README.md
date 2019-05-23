@@ -133,6 +133,23 @@ Sample Maven configuration:
 
 <br/>
 
+### Deploy the task to Spring Cloud Data Flow server
+1. login the server via data flow shell
+2. Register the app from Maven repository
+   ```
+   app register --name spring-cloud-task-redis-cache --type task --uri maven://com.example.jeffrey:spring-cloud-task-redis-cache:0.1.0
+   ```
+3. Creating a task definition:
+   ```
+   task create spring-cloud-task-redis-cache --definition "spring-cloud-task-redis-cache"
+   ```
+4. Launching a task:
+   ```
+   task launch spring-cloud-task-redis-cache
+   ```
+
+<br/>
+
 ### References:
 
 ##### Spring Cloud Task 1.2.2
@@ -143,5 +160,7 @@ Sample Maven configuration:
 - https://projects.spring.io/spring-batch/
 - https://spring.io/guides/gs/batch-processing/
 
+##### Spring Cloud Data Flow Samples
+- https://docs.spring.io/spring-cloud-dataflow-samples/docs/current/reference/htmlsingle/
 
 <br/>
